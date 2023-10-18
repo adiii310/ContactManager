@@ -4,25 +4,18 @@ import AddContact from './AddContact';
 import ContactList from './ContactList';
 
 function App() {
-  const [contacts, setContacts] = useState([]);
-
   const LOCAL_STORAGE_KEY = 'contacts';
+  const [contacts, setContacts] = useState(() => {
+    return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || []
+  });
+  useEffect(() => {
+    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
+  }, [contacts]);
+
 
   const addContactHandler = (contact) => {
     setContacts([...contacts, contact ]);
   };
-
-  useEffect(() => {
-    const retrievedData = window.localStorage.getItem(LOCAL_STORAGE_KEY);
-    const data = JSON.parse(retrievedData)
-    if (data) {
-      setContacts(data);
-    }
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
-  }, [contacts]);
 
 const deleteContactHandler =(id)=>{
   const newContact = contacts.filter((contact)=> contact.id !== id);
