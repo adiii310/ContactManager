@@ -36,28 +36,44 @@ function App() {
   }, []);
 
   const addContactHandler = async (contact) => {
-    const shortId = shortid.generate();
-    const request = {
-      id: shortId,
-      ...contact,
-    };
-    const response = await api.post('/contacts', request);
-    setContacts([...contacts, response.data]);
+    try {
+      const shortId = shortid.generate();
+      const request = {
+        id: shortId,
+        ...contact,
+      };
+      const response = await api.post('/contacts', request);
+      setContacts([...contacts, response.data]);
+    } catch (error) {
+      console.error('Error adding contact:', error);
+      // Handle the error, e.g., display an error message to the user or log it
+    }
   };
 
   const deleteContactHandler = async (id) => {
-    await api.delete(`/contacts/${id}`);
-    const newContact = contacts.filter((contact) => contact.id !== id);
-    setContacts(newContact);
+    try {
+      await api.delete(`/contacts/${id}`);
+      const newContact = contacts.filter((contact) => contact.id !== id);
+      setContacts(newContact);
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      // Handle the error, e.g., display an error message to the user or log it
+    }
   }
 
   const updateContactHandler = async (contact) => {
-    const response = await api.put(`/contacts/${contact.id}`, contact);
-    const { id, name, email } = response.data;
-    setContacts(
-      contacts.map((contact) => (contact.id === id ? { ...response.data } : contact))
-    );
+    try {
+      const response = await api.put(`/contacts/${contact.id}`, contact);
+      const { id, name, email } = response.data;
+      setContacts(
+        contacts.map((c) => (c.id === id ? { ...response.data } : c))
+      );
+    } catch (error) {
+      console.error('Error updating contact:', error);
+      // Handle the error, e.g., display an error message to the user or log it
+    }
   };
+
 
   return (
     <div className="ui container">
