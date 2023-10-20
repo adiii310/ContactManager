@@ -4,52 +4,74 @@ import Header from './Header';
 import AddContact from './AddContact';
 import ContactList from './ContactList';
 import ContactDetails from './ContactDetails';
+import UpdateContact from './UpdateContact';
 import shortid from 'shortid';
-// import { v4 as uuidv4 } from 'uuid';
+import api from '../api/contacts';
 
 function App() {
   const LOCAL_STORAGE_KEY = 'contacts';
-  const [contacts, setContacts] = useState(() => {
-    return JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || []
-  });
-  useEffect(() => {
-    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(contacts));
-  }, [contacts]);
+  const [contacts, setContacts] = useState([]);
 
-
-  const addContactHandler = (contact) => {
-    // const newId = uuidv4(); ---> uuid
-    const shortId = shortid.generate();  // ---> shortId
-    setContacts([...contacts, { id: shortId, ...contact }]);
-  };
-
-  const deleteContactHandler = (id) => {
-    const newContact = contacts.filter((contact) => contact.id !== id);
-    setContacts(newContact)
+  // retrieve contacts from the JSON server
+  const retrieveContacts = async () => {
+    try {
+      const response = await api.get('/contacts/');
+      return response.data;
+    } catch (error) {
+      console.error('Error in retrieving data', error);
+      throw error;
+    }
   }
 
-  return (
-    <div className='ui container' >
-      <Router>
+  useEffect(() => {
+    const getAllContacts = async () => {
+      try {
+        const allContacts = await retrieveContacts();
+        if (allContacts) setContacts(allContacts);
+      } catch (error) {
+        console.error('Data not found', error);
+      }
+    };
+    getAllContacts();
+  }, []);
 
+  const addContactHandler = async (contact) => {
+    const shortId = shortid.generate();
+    const request = {
+      id: shortId,
+      ...contact,
+    };
+    const response = await api.post('/contacts', request);
+    setContacts([...contacts, response.data]);
+  };
+
+  const deleteContactHandler = async (id) => {
+    await api.delete(`/contacts/${id}`);
+    const newContact = contacts.filter((contact) => contact.id !== id);
+    setContacts(newContact);
+  }
+
+  const updateContactHandler = async (contact) => {
+    const response = await api.put(`/contacts/${contact.id}`, contact);
+    const { id, name, email } = response.data;
+    setContacts(
+      contacts.map((contact) => (contact.id === id ? { ...response.data } : contact))
+    );
+  };
+
+  return (
+    <div className="ui container">
+      <Router>
         <Header />
         <Routes>
-          <Route path='/' element={<ContactList contacts={contacts} getContactId={deleteContactHandler} />} />
-          <Route path='/add' element={<AddContact addContactHandler={addContactHandler} />} />
-          <Route path='/contacts/:id' element={<ContactDetails/>} />
+          <Route path="/" element={<ContactList contacts={contacts} getContactId={deleteContactHandler} />} />
+          <Route path="/add" element={<AddContact addContactHandler={addContactHandler} />} />
+          <Route path="/contacts/:id" element={<ContactDetails />} />
+          <Route path="/edit/:id" element={<UpdateContact updateContactHandler={updateContactHandler} contacts={contacts} />} />
         </Routes>
       </Router>
-
     </div>
   );
 }
 
 export default App;
-
-// diffrebt ways to pass componet with props in Route componetn.
-
-{/* <Route excat path='/' render={(props)=> (<ContactList {...props} contacts={contacts} getContactId ={deleteContactHandler}  />)} /> */ }
-{/* <Route excat path='/add' render={(props)=> (<AddContact {...props}  addContactHandler={addContactHandler}  />)} /> */ }
-
-{/* <Route  path='/' Component={() => <ContactList contacts={contacts} getContactId = {deleteContactHandler} />} /> */ }
-{/* <Route path='/add' Component={()=><AddContact addContactHandler={addContactHandler} />} /> */ }
