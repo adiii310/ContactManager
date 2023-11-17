@@ -11,6 +11,7 @@ import api from '../api/contacts';
 function App() {
   const LOCAL_STORAGE_KEY = 'contacts';
   const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // retrieve contacts from the JSON server
   const retrieveContacts = async () => {
@@ -21,18 +22,24 @@ function App() {
       console.error('Error in retrieving data', error);
       throw error;
     }
-  }
+  };
 
   useEffect(() => {
-    const getAllContacts = async () => {
-      try {
-        const allContacts = await retrieveContacts();
-        if (allContacts) setContacts(allContacts);
-      } catch (error) {
-        console.error('Data not found', error);
-      }
-    };
-    getAllContacts();
+      const getAllContacts = async () => {
+        try {
+          const allContacts = await retrieveContacts();
+          if (allContacts) {
+            setContacts(allContacts);
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Data not found', error);
+          setLoading(false);
+        }
+      };
+      getAllContacts();
+
+
   }, []);
 
   const addContactHandler = async (contact) => {
@@ -59,7 +66,7 @@ function App() {
       console.error('Error deleting contact:', error);
       // Handle the error, e.g., display an error message to the user or log it
     }
-  }
+  };
 
   const updateContactHandler = async (contact) => {
     try {
@@ -74,16 +81,27 @@ function App() {
     }
   };
 
-
   return (
     <div className="ui container">
       <Router>
         <Header />
         <Routes>
-          <Route path="/" element={<ContactList contacts={contacts} getContactId={deleteContactHandler} />} />
+          <Route
+            path="/"
+            element={
+              <ContactList
+                contacts={contacts}
+                getContactId={deleteContactHandler}
+                loading={loading}
+              />
+            }
+          />
           <Route path="/add" element={<AddContact addContactHandler={addContactHandler} />} />
           <Route path="/contacts/:id" element={<ContactDetails />} />
-          <Route path="/edit/:id" element={<UpdateContact updateContactHandler={updateContactHandler} contacts={contacts} />} />
+          <Route
+            path="/edit/:id"
+            element={<UpdateContact updateContactHandler={updateContactHandler} contacts={contacts} />}
+          />
         </Routes>
       </Router>
     </div>
